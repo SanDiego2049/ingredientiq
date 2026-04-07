@@ -25,9 +25,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'IngredientIQ API is running' })
 })
 
-// Routes (we will add these as we build)
-// app.use('/api/auth', require('./src/routes/authRoutes'))
-// app.use('/api/scans', require('./src/routes/scanRoutes'))
+// Routes
+app.use('/api', require('./src/routes/index'))
 
 // Start server
 app.listen(PORT, () => {
