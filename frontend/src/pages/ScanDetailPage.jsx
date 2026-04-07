@@ -1,9 +1,12 @@
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 import SummaryCard from '@/components/result/SummaryCard'
 import BreakdownPanel from '@/components/result/BreakdownPanel'
 import Disclaimer from '@/components/result/Disclaimer'
 import Spinner from '@/components/ui/Spinner'
+import Modal from '@/components/ui/Modal'
+import Button from '@/components/ui/Button'
 import { useScanDetail } from '@/hooks/useScanDetail'
 import { useAuthStore } from '@/store/authStore'
 import { deleteScan } from '@/services/scanService'
@@ -14,11 +17,20 @@ function ScanDetailPage() {
   const navigate = useNavigate()
   const { session } = useAuthStore()
   const { scan, loading, error } = useScanDetail(id)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   async function handleDelete() {
-    if (!confirm('Delete this scan?')) return
-    await deleteScan(id, session.access_token)
-    navigate('/history')
+    setDeleting(true)
+    try {
+      await deleteScan(id, session.access_token)
+      navigate('/history')
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setDeleting(false)
+      setShowDeleteModal(false)
+    }
   }
 
   if (loading) {
@@ -65,7 +77,7 @@ function ScanDetailPage() {
           </div>
         </div>
         <button
-          onClick={handleDelete}
+          onClick={() => setShowDeleteModal(true)}
           aria-label="Delete scan"
           className="text-red-400 hover:text-red-600"
         >
@@ -82,6 +94,37 @@ function ScanDetailPage() {
         />
         <Disclaimer text={scan.analysis_json?.disclaimer} />
       </div>
+
+      {/* Delete confirmation modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Scan"
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-gray-600">
+            Are you sure you want to delete <strong>{scan.product_name}</strong>
+            ? This action cannot be undone.
+          </p>
+          <div className="flex gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => setShowDeleteModal(false)}
+              fullWidth
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDelete}
+              disabled={deleting}
+              fullWidth
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
