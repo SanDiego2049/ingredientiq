@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { useAuth } from '@/hooks/useAuth'
+import AuthModal from '@/components/auth/AuthModal'
 import ScannerPage from '@/pages/ScannerPage'
 import ResultPage from '@/pages/ResultPage'
 import HistoryPage from '@/pages/HistoryPage'
@@ -6,9 +8,11 @@ import ScanDetailPage from '@/pages/ScanDetailPage'
 import AuthPage from '@/pages/AuthPage'
 import ProfilePage from '@/pages/ProfilePage'
 
-function App() {
+function AppContent() {
+  useAuth()
+
   return (
-    <BrowserRouter>
+    <>
       <Routes>
         <Route path="/" element={<ScannerPage />} />
         <Route path="/result" element={<ResultPage />} />
@@ -17,6 +21,15 @@ function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/profile" element={<ProfilePage />} />
       </Routes>
+      <AuthModal />
+    </>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   )
 }

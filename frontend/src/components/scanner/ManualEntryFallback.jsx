@@ -24,7 +24,7 @@ function ManualEntryFallback({ onSubmit }) {
           onChange={(e) => setText(e.target.value)}
           rows={8}
           placeholder="e.g. Water, Sugar, Salt, Citric Acid..."
-          className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+          className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
         />
       </div>
       <Button type="submit" disabled={!text.trim()} fullWidth>

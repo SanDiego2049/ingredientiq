@@ -27,7 +27,7 @@ function CameraViewfinder({ onCapture, onManualSubmit }) {
 
   if (error) {
     return (
-      <div className="flex flex-col gap-6 items-center w-full px-4 py-8">
+      <div className="flex flex-col gap-6 items-center w-full px-4 pt-12">
         <p className="text-sm text-red-600 text-center">{error}</p>
         <ManualEntryFallback onSubmit={onManualSubmit} />
       </div>
