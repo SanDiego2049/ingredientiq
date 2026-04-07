@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { History } from 'lucide-react'
+import { History, User } from 'lucide-react'
 import CameraViewfinder from '@/components/scanner/CameraViewfinder'
 import TextReviewDrawer from '@/components/scanner/TextReviewDrawer'
 import OcrProgressBar from '@/components/scanner/OcrProgressBar'
@@ -27,6 +27,7 @@ function ScannerPage() {
   const { addGuestScan } = useGuestScans()
   const { session } = useAuthStore()
   const { setCurrentIngredients } = useScanStore()
+  const { user } = useAuthStore()
 
   async function handleCapture(imageData) {
     const text = await extractText(imageData)
@@ -106,13 +107,24 @@ function ScannerPage() {
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-4">
         <h1 className="text-white font-bold text-lg">IngredientIQ</h1>
-        <button
-          onClick={() => navigate('/history')}
-          aria-label="View history"
-          className="text-white hover:text-green-400 transition-colors"
-        >
-          <History size={24} />
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/history')}
+            aria-label="View history"
+            className="text-white hover:text-green-400 transition-colors"
+          >
+            <History size={24} />
+          </button>
+          {user && (
+            <button
+              onClick={() => navigate('/profile')}
+              aria-label="View profile"
+              className="text-white hover:text-green-400 transition-colors"
+            >
+              <User size={24} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Camera or Manual */}

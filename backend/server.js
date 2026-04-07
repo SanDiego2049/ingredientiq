@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const helmet = require('helmet')
+const { errorHandler } = require('./src/middleware/errorHandler')
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -27,6 +28,9 @@ app.get('/api/health', (req, res) => {
 
 // Routes
 app.use('/api', require('./src/routes/index'))
+
+// Global error handler — must be last
+app.use(errorHandler)
 
 // Start server
 app.listen(PORT, () => {

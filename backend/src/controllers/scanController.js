@@ -2,11 +2,14 @@ const { supabase } = require('../services/supabaseService')
 const { analyseIngredients } = require('../services/geminiService')
 const { success, fail } = require('../utils/responseHelpers')
 
-async function analyse(req, res) {
-  const { ingredients } = req.body
-
-  const result = await analyseIngredients(ingredients)
-  return success(res, result)
+async function analyse(req, res, next) {
+  try {
+    const { ingredients } = req.body
+    const result = await analyseIngredients(ingredients)
+    return success(res, result)
+  } catch (err) {
+    next(err)
+  }
 }
 
 async function save(req, res) {
