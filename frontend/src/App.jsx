@@ -1,8 +1,23 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import ScannerPage from '@/pages/ScannerPage'
+import ResultPage from '@/pages/ResultPage'
+import HistoryPage from '@/pages/HistoryPage'
+import ScanDetailPage from '@/pages/ScanDetailPage'
+import AuthPage from '@/pages/AuthPage'
+import ProfilePage from '@/pages/ProfilePage'
+
 function App() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <h1 className="text-4xl font-bold text-green-600">IngredientIQ</h1>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<ScannerPage />} />
+        <Route path="/result" element={<ResultPage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/history/:id" element={<ScanDetailPage />} />
+        <Route path="/auth" element={<AuthPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
