@@ -172,15 +172,26 @@ function ScannerPage() {
         </div>
       )}
 
-      {/* Manual entry toggle */}
-      {!showManual && (
-        <button
-          onClick={() => setShowManual(true)}
-          className="absolute bottom-4 left-0 right-0 text-center text-white/70 text-xs hover:text-white"
-        >
-          Type ingredients manually instead
-        </button>
-      )}
+      {/* Bottom bar */}
+      <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-2 pb-4">
+        {!showManual && (
+          <button
+            onClick={() => setShowManual(true)}
+            className="text-white/70 text-xs hover:text-white"
+          >
+            Type ingredients manually instead
+          </button>
+        )}
+        <div className="flex items-center gap-3 text-white/40 text-xs">
+          <a href="/privacy" className="hover:text-white/70 transition-colors">
+            Privacy Policy
+          </a>
+          <span>·</span>
+          <a href="/terms" className="hover:text-white/70 transition-colors">
+            Terms and Conditions
+          </a>
+        </div>
+      </div>
 
       {/* Text Review Drawer */}
       <TextReviewDrawer

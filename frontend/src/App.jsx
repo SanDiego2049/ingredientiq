@@ -7,6 +7,8 @@ import HistoryPage from '@/pages/HistoryPage'
 import ScanDetailPage from '@/pages/ScanDetailPage'
 import AuthPage from '@/pages/AuthPage'
 import ProfilePage from '@/pages/ProfilePage'
+import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage'
+import TermsPage from '@/pages/TermsPage'
 
 function AppContent() {
   useAuth()
@@ -20,6 +22,8 @@ function AppContent() {
         <Route path="/history/:id" element={<ScanDetailPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
       </Routes>
       <AuthModal />
     </>

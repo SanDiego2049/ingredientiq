@@ -12,10 +12,17 @@ async function analyseIngredients(ingredients) {
   const result = await model.generateContent(prompt)
   const text = result.response.text()
 
+  const cleaned = text
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim()
+
   try {
-    const parsed = JSON.parse(text)
+    const parsed = JSON.parse(cleaned)
     return parsed
   } catch {
+    console.error('Raw Gemini response:', text)
     throw new Error('Gemini returned invalid JSON')
   }
 }

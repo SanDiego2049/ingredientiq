@@ -158,6 +158,16 @@ function RegisterForm({ onSuccess, onSwitchToLogin }) {
           Sign in
         </button>
       </p>
+      <p className="text-center text-xs text-gray-400">
+        By creating an account you agree to our{' '}
+        <a href="/terms" className="text-green-600 hover:underline">
+          Terms and Conditions
+        </a>{' '}
+        and{' '}
+        <a href="/privacy" className="text-green-600 hover:underline">
+          Privacy Policy
+        </a>
+      </p>
     </form>
   )
 }
