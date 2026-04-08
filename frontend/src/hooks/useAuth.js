@@ -7,17 +7,20 @@ export function useAuth() {
     useAuthStore()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session)
-      setUser(data.session?.user ?? null)
-      setLoading(false)
-    })
+    const minLoadTime = new Promise((resolve) => setTimeout(resolve, 1500))
+
+    Promise.all([supabase.auth.getSession(), minLoadTime]).then(
+      ([{ data }]) => {
+        setSession(data.session)
+        setUser(data.session?.user ?? null)
+        setLoading(false)
+      }
+    )
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session)
         setUser(session?.user ?? null)
-        setLoading(false)
       }
     )
 
