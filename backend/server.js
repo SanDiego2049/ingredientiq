@@ -7,6 +7,9 @@ const { errorHandler } = require('./src/middleware/errorHandler')
 const app = express()
 const PORT = process.env.PORT || 3000
 
+// Trust Render's proxy
+app.set('trust proxy', 1)
+
 // Security middleware
 app.use(helmet())
 
