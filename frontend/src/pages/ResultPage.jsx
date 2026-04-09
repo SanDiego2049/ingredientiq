@@ -22,8 +22,18 @@ function ResultPage() {
   const [showNameInput, setShowNameInput] = useState(false)
 
   if (!lastResult) {
-    navigate('/')
-    return null
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 px-4">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <ScanLine size={48} className="text-gray-300" aria-hidden="true" />
+          <h2 className="font-semibold text-gray-700">No result to display</h2>
+          <p className="text-sm text-gray-400">
+            Your scan result is no longer available. Please scan again.
+          </p>
+        </div>
+        <Button onClick={() => navigate('/')}>Scan Again</Button>
+      </div>
+    )
   }
 
   async function handleSave() {
