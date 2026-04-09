@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useAuthStore } from '@/store/authStore'
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useScanStore } from '@/store/scanStore'
 import AuthModal from '@/components/auth/AuthModal'
 import ScannerPage from '@/pages/ScannerPage'
 import ResultPage from '@/pages/ResultPage'
@@ -47,7 +50,22 @@ function AppLoader() {
 
 function AppContent() {
   useAuth()
-  const { loading } = useAuthStore()
+  const { loading, user } = useAuthStore()
+  const { setLastResult, setCurrentIngredients } = useScanStore()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (user) {
+      const pending = sessionStorage.getItem('ingredientiq_pending_save')
+      if (pending) {
+        const { result, ingredients } = JSON.parse(pending)
+        setLastResult(result)
+        setCurrentIngredients(ingredients)
+        sessionStorage.removeItem('ingredientiq_pending_save')
+        navigate('/result')
+      }
+    }
+  }, [user])
 
   if (loading) {
     return <AppLoader />

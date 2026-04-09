@@ -38,10 +38,17 @@ function ResultPage() {
 
   async function handleSave() {
     if (!session) {
+      // Save result and ingredients to sessionStorage before OAuth redirect
+      sessionStorage.setItem(
+        'ingredientiq_pending_save',
+        JSON.stringify({
+          result: lastResult,
+          ingredients: currentIngredients,
+        })
+      )
       openAuthModal()
       return
     }
-
     setShowNameInput(true)
   }
 
