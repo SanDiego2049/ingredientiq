@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { History, User } from 'lucide-react'
+import { History, User, FlipHorizontal } from 'lucide-react'
 import CameraViewfinder from '@/components/scanner/CameraViewfinder'
+import CaptureButton from '@/components/scanner/CaptureButton'
 import TextReviewDrawer from '@/components/scanner/TextReviewDrawer'
 import OcrProgressBar from '@/components/scanner/OcrProgressBar'
 import ManualEntryFallback from '@/components/scanner/ManualEntryFallback'
@@ -16,20 +17,29 @@ import { hashIngredients } from '@shared/hash'
 
 function ScannerPage() {
   const navigate = useNavigate()
+  const cameraRef = useRef(null)
   const [showManual, setShowManual] = useState(false)
   const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false)
   const [extractedText, setExtractedText] = useState('')
   const [duplicatePrompt, setDuplicatePrompt] = useState(null)
+  const [cameraError, setCameraError] = useState(null)
+  const [isReady, setIsReady] = useState(false)
 
   const { extractText, progress, isProcessing } = useOCR()
   const { analyse, isAnalysing, error } = useAnalysis()
   const { checkForRepeat } = useRepeatDetection()
   const { addGuestScan } = useGuestScans()
   const { session } = useAuthStore()
-  const { setCurrentIngredients } = useScanStore()
   const { user } = useAuthStore()
+  const { setCurrentIngredients } = useScanStore()
 
-  async function handleCapture(imageData) {
+  async function handleCapture() {
+    if (cameraRef.current) {
+      cameraRef.current.capture()
+    }
+  }
+
+  async function handleCapturedImage(imageData) {
     const text = await extractText(imageData)
     if (text) {
       setExtractedText(text)
@@ -39,23 +49,18 @@ function ScannerPage() {
 
   async function handleAnalyse(ingredients) {
     setCurrentIngredients(ingredients)
-
     const { isDuplicate, hash, cachedScan } = await checkForRepeat(ingredients)
-
     if (isDuplicate) {
       setDuplicatePrompt({ hash, cachedScan, ingredients })
       return
     }
-
     await runAnalysis(ingredients)
   }
 
   async function runAnalysis(ingredients) {
     const result = await analyse(ingredients)
     if (!result) return
-
     const hash = await hashIngredients(ingredients)
-
     if (!session) {
       addGuestScan({
         product_name: 'Unnamed Product',
@@ -66,13 +71,15 @@ function ScannerPage() {
         analysis_json: result,
       })
     }
-
     navigate('/result')
   }
 
   if (duplicatePrompt) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4 gap-6">
+      <div
+        className="flex flex-col items-center justify-center bg-gray-50 px-4 gap-6"
+        style={{ height: '100dvh' }}
+      >
         <p className="text-gray-700 font-medium text-center">
           You have scanned this product before. Use the cached result?
         </p>
@@ -103,7 +110,10 @@ function ScannerPage() {
   }
 
   return (
-    <div className="relative w-full h-screen bg-black overflow-hidden">
+    <div
+      className="relative w-full bg-black overflow-hidden flex flex-col"
+      style={{ height: '100dvh' }}
+    >
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-4">
         <h1 className="text-white font-bold text-lg">IngredientIQ</h1>
@@ -128,26 +138,69 @@ function ScannerPage() {
       </div>
 
       {/* Camera or Manual */}
-      {showManual ? (
-        <div className="flex flex-col items-center justify-center h-full px-6 bg-gray-50">
-          <div className="w-full max-w-md">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">
-              Enter Ingredients Manually
-            </h2>
-            <ManualEntryFallback onSubmit={handleAnalyse} />
+      <div className="flex-1 overflow-hidden">
+        {showManual ? (
+          <div className="flex flex-col items-center justify-center h-full px-6 bg-gray-50">
+            <div className="w-full max-w-md">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                Enter Ingredients Manually
+              </h2>
+              <ManualEntryFallback onSubmit={handleAnalyse} />
+              <button
+                onClick={() => setShowManual(false)}
+                className="mt-4 text-sm text-green-600 hover:underline w-full text-center"
+              >
+                Use camera instead
+              </button>
+            </div>
+          </div>
+        ) : (
+          <CameraViewfinder
+            ref={cameraRef}
+            onCapture={handleCapturedImage}
+            onManualSubmit={handleAnalyse}
+            onError={setCameraError}
+          />
+        )}
+      </div>
+
+      {/* Bottom bar */}
+      {!showManual && !cameraError && (
+        <div
+          className="flex flex-col items-center gap-3 py-4"
+          style={{
+            background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+          }}
+        >
+          <div className="flex items-center justify-center gap-8">
+            <CaptureButton onCapture={handleCapture} disabled={false} />
             <button
-              onClick={() => setShowManual(false)}
-              className="mt-4 text-sm text-green-600 hover:underline w-full text-center"
+              onClick={() => cameraRef.current?.toggle()}
+              aria-label="Toggle camera"
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
             >
-              Use camera instead
+              <FlipHorizontal size={20} aria-hidden="true" />
             </button>
           </div>
+          <button
+            onClick={() => setShowManual(true)}
+            className="text-white/70 text-xs hover:text-white"
+          >
+            Type ingredients manually instead
+          </button>
+          <div className="flex items-center gap-3 text-white/40 text-xs">
+            <a
+              href="/privacy"
+              className="hover:text-white/70 transition-colors"
+            >
+              Privacy Policy
+            </a>
+            <span>·</span>
+            <a href="/terms" className="hover:text-white/70 transition-colors">
+              Terms and Conditions
+            </a>
+          </div>
         </div>
-      ) : (
-        <CameraViewfinder
-          onCapture={handleCapture}
-          onManualSubmit={handleAnalyse}
-        />
       )}
 
       {/* OCR Progress */}
@@ -171,27 +224,6 @@ function ScannerPage() {
           {error}
         </div>
       )}
-
-      {/* Bottom bar */}
-      <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center gap-2 pb-4">
-        {!showManual && (
-          <button
-            onClick={() => setShowManual(true)}
-            className="text-white/70 text-xs hover:text-white"
-          >
-            Type ingredients manually instead
-          </button>
-        )}
-        <div className="flex items-center gap-3 text-white/40 text-xs">
-          <a href="/privacy" className="hover:text-white/70 transition-colors">
-            Privacy Policy
-          </a>
-          <span>·</span>
-          <a href="/terms" className="hover:text-white/70 transition-colors">
-            Terms and Conditions
-          </a>
-        </div>
-      </div>
 
       {/* Text Review Drawer */}
       <TextReviewDrawer
