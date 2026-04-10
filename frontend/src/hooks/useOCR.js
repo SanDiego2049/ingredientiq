@@ -7,14 +7,18 @@ function preprocessImage(imageData) {
     img.onload = () => {
       const canvas = document.createElement('canvas')
 
-      // Scale up the image 2x — Tesseract performs much better on larger images
-      const scale = 2
+      // Scale up to hit ~300 DPI equivalent — single biggest quality improvement
+      const scale = 3
       canvas.width = img.width * scale
       canvas.height = img.height * scale
 
       const ctx = canvas.getContext('2d')
 
-      // Scale up
+      // Fill with white background first — removes transparency/alpha issues
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Draw scaled image on white background
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
       // Get pixel data
@@ -22,29 +26,32 @@ function preprocessImage(imageData) {
       const data = imageDataObj.data
 
       for (let i = 0; i < data.length; i += 4) {
-        // Step 1 — Convert to greyscale using luminance formula
+        // Convert to greyscale using luminance formula
         const grey = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]
 
-        // Step 2 — Increase contrast by pushing pixels toward black or white
-        const contrast = 1.5
-        const factor =
-          (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255))
-        const adjusted = factor * (grey - 128) + 128
+        // Apply Otsu-style adaptive threshold
+        // Instead of fixed 128, use 160 — biased toward keeping more text
+        const threshold = grey < 160 ? 0 : 255
 
-        // Step 3 — Clamp to 0-255
-        const final = Math.min(255, Math.max(0, adjusted))
-
-        // Step 4 — Apply threshold — anything below 128 becomes black, above becomes white
-        const threshold = final < 128 ? 0 : 255
-
-        data[i] = threshold // R
-        data[i + 1] = threshold // G
-        data[i + 2] = threshold // B
-        // Alpha stays the same
+        data[i] = threshold
+        data[i + 1] = threshold
+        data[i + 2] = threshold
+        data[i + 3] = 255 // Force full opacity — no alpha channel
       }
 
       ctx.putImageData(imageDataObj, 0, 0)
-      resolve(canvas.toDataURL('image/png'))
+
+      // Add a white border — Tesseract struggles with text touching edges
+      const borderedCanvas = document.createElement('canvas')
+      const border = 20
+      borderedCanvas.width = canvas.width + border * 2
+      borderedCanvas.height = canvas.height + border * 2
+      const borderedCtx = borderedCanvas.getContext('2d')
+      borderedCtx.fillStyle = '#ffffff'
+      borderedCtx.fillRect(0, 0, borderedCanvas.width, borderedCanvas.height)
+      borderedCtx.drawImage(canvas, border, border)
+
+      resolve(borderedCanvas.toDataURL('image/png'))
     }
     img.src = imageData
   })
@@ -61,7 +68,6 @@ export function useOCR() {
     setProgress(0)
 
     try {
-      // Preprocess before sending to Tesseract
       const processedImage = await preprocessImage(imageData)
 
       const result = await Tesseract.recognize(processedImage, 'eng', {
@@ -70,7 +76,12 @@ export function useOCR() {
             setProgress(Math.round(info.progress * 100))
           }
         },
-        tessedit_pageseg_mode: '6', // Assume a single uniform block of text
+        // PSM 11 — sparse text, find as much text as possible in no particular order
+        // Best for food labels which are not clean uniform text blocks
+        tessedit_pageseg_mode: '11',
+        // Disable dictionary — ingredient names are not real words
+        load_system_dawg: '0',
+        load_freq_dawg: '0',
       })
 
       const text = result.data.text.trim()
