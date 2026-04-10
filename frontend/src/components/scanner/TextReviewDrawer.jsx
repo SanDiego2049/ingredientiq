@@ -1,9 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Drawer from '@/components/ui/Drawer'
 import Button from '@/components/ui/Button'
 
 function TextReviewDrawer({ isOpen, onClose, extractedText, onConfirm }) {
   const [text, setText] = useState(extractedText)
+
+  // Sync extractedText into local state whenever it changes
+  useEffect(() => {
+    setText(extractedText)
+  }, [extractedText])
 
   function handleConfirm() {
     onConfirm(text)

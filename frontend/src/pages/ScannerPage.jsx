@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { History, User, FlipHorizontal } from 'lucide-react'
+import { History, User, FlipHorizontal, ImagePlus } from 'lucide-react'
 import CameraViewfinder from '@/components/scanner/CameraViewfinder'
 import CaptureButton from '@/components/scanner/CaptureButton'
 import TextReviewDrawer from '@/components/scanner/TextReviewDrawer'
@@ -18,20 +18,30 @@ import { hashIngredients } from '@shared/hash'
 function ScannerPage() {
   const navigate = useNavigate()
   const cameraRef = useRef(null)
+  const fileInputRef = useRef(null)
   const [showManual, setShowManual] = useState(false)
   const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false)
   const [extractedText, setExtractedText] = useState('')
   const [duplicatePrompt, setDuplicatePrompt] = useState(null)
   const [cameraError, setCameraError] = useState(null)
-  const [isReady, setIsReady] = useState(false)
 
   const { extractText, progress, isProcessing } = useOCR()
   const { analyse, isAnalysing, error } = useAnalysis()
   const { checkForRepeat } = useRepeatDetection()
   const { addGuestScan } = useGuestScans()
-  const { session } = useAuthStore()
-  const { user } = useAuthStore()
+  const { session, user } = useAuthStore()
   const { setCurrentIngredients } = useScanStore()
+
+  async function handleCapturedImage(imageData) {
+    const text = await extractText(imageData)
+    if (text) {
+      setExtractedText(text)
+      setReviewDrawerOpen(true)
+    } else {
+      setExtractedText('')
+      setReviewDrawerOpen(true)
+    }
+  }
 
   async function handleCapture() {
     if (cameraRef.current) {
@@ -39,12 +49,19 @@ function ScannerPage() {
     }
   }
 
-  async function handleCapturedImage(imageData) {
-    const text = await extractText(imageData)
-    if (text) {
-      setExtractedText(text)
-      setReviewDrawerOpen(true)
+  // User picks a photo from their camera roll
+  async function handleFileUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      await handleCapturedImage(event.target.result)
     }
+    reader.readAsDataURL(file)
+
+    // Reset input so the same file can be selected again if needed
+    e.target.value = ''
   }
 
   async function handleAnalyse(ingredients) {
@@ -164,6 +181,15 @@ function ScannerPage() {
         )}
       </div>
 
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+
       {/* Bottom bar */}
       {!showManual && !cameraError && (
         <div
@@ -173,7 +199,19 @@ function ScannerPage() {
           }}
         >
           <div className="flex items-center justify-center gap-8">
+            {/* Upload from camera roll */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="Upload photo from camera roll"
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+            >
+              <ImagePlus size={20} aria-hidden="true" />
+            </button>
+
+            {/* Capture live */}
             <CaptureButton onCapture={handleCapture} disabled={false} />
+
+            {/* Flip camera */}
             <button
               onClick={() => cameraRef.current?.toggle()}
               aria-label="Toggle camera"
@@ -182,6 +220,7 @@ function ScannerPage() {
               <FlipHorizontal size={20} aria-hidden="true" />
             </button>
           </div>
+
           <button
             onClick={() => setShowManual(true)}
             className="text-white/70 text-xs hover:text-white"
